@@ -1,0 +1,26 @@
+[project]
+name = "mqtt-weather-client"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Vito", email = "mahmoudbaibars@gmail.com" }
+]
+dependencies = [
+    "paho-mqtt>=2.1.0",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mqtt_weather_client"]
