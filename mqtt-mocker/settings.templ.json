@@ -1,0 +1,31 @@
+{
+  "BROKER_URL": "${BROKER_URL}",
+  "TOPICS": [
+    {
+      "TYPE": "list",
+      "PREFIX": "place",
+      "LIST": ["roof", "basement"],
+      "TIME_INTERVAL": 8,
+      "DATA": [
+        {
+          "NAME": "temperature",
+          "TYPE": "float",
+          "MIN_VALUE": 20,
+          "MAX_VALUE": 55,
+          "MAX_STEP": 3,
+          "RETAIN_PROBABILITY": 0.5,
+          "INCREASE_PROBABILITY": 0.6
+        },
+        {
+          "NAME": "pressure",
+          "TYPE": "float",
+          "MIN_VALUE": 40,
+          "MAX_VALUE": 90,
+          "MAX_STEP": 3,
+          "RETAIN_PROBABILITY": 0.5,
+          "INCREASE_PROBABILITY": 0.2
+        }
+      ]
+    }
+  ]
+}
