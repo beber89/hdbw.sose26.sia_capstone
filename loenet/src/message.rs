@@ -4,8 +4,6 @@ use std::fmt;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Header {
-    pub dst_ip: IpAddr,
-    pub app: String,
     pub dst_app: String,
 }
 
@@ -19,8 +17,8 @@ impl fmt::Display for Header {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Header {{ dst_ip: {}, app: \"{}\", dst_app: \"{}\" }}",
-            self.dst_ip, self.app, self.dst_app
+            "Header {{dst_app: \"{}\"}}",
+            self.dst_app
         )
     }
 }

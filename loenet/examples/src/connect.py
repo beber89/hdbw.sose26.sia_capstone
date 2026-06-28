@@ -16,7 +16,10 @@ async def receive_messages(websocket):
 async def connect_to_rust_server():
     uri = "ws://localhost:8765"  # Replace with the Rust server's IP if remote
     try:
-        async with websockets.connect(uri) as websocket:
+        headers = {
+            "X-App-Data": "my_app"  # Send the app_name as a string
+        }
+        async with websockets.connect(uri, extra_headers=headers) as websocket:
             print("Connected to Rust WebSocket server!")
             # Start the message receiver task
             receiver_task = asyncio.create_task(receive_messages(websocket))

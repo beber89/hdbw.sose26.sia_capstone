@@ -1,8 +1,21 @@
-use futures::{SinkExt, StreamExt};
 use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::tungstenite::protocol::Message;
+use tokio_tungstenite::tungstenite::{protocol::Message, handshake::server::{Request, Response}};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use dashmap::DashMap;
+use std::cell::RefCell;
+use futures::{SinkExt, StreamExt};
+use std::sync::Mutex;
+use http::StatusCode;
+
+thread_local! {
+    static APP_NAME: RefCell<Option<String>> = RefCell::new(None);
+}
+
+
+lazy_static::lazy_static! {
+    static ref APP_STREAMS: DashMap<String, Arc<Mutex<futures::stream::SplitSink<tokio_tungstenite::WebSocketStream<TcpStream>, Message>>>> = DashMap::new();
+}
 
 pub async fn start_websocket_server(
     addr: SocketAddr,
@@ -34,26 +47,68 @@ async fn handle_connection(
     let addr = stream.peer_addr().expect("Failed to get peer address");
     println!("New WebSocket connection: {}", addr);
 
-    let ws_stream = tokio_tungstenite::accept_async(stream)
+    let callback = |req: &Request, response: Response| {
+        if let Some(app_data) = req.headers().get("X-App-Data") {
+            match app_data.to_str() {
+                Ok(app_name) => {
+                    println!("Raw X-App-Data: {}", app_name);  
+                    // Store `app_name` in thread-local storage as needed
+                    APP_NAME.with(|cell| *cell.borrow_mut() = Some(app_name.to_string()));
+                    return Ok(response);
+                }
+                Err(_) => {
+                    let mut r = Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(Some("Invalid UTF-8 in X-App-Data".to_string()))
+                    .unwrap();
+                    return Err(r);
+                }, 
+            }
+
+        } else {
+            let mut r = Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Some("Packet does not contain the applicaiton name in X-App-Data Header".to_string()))
+            .unwrap();
+            return Err(r);
+        }
+        Ok(response)
+    };
+
+    let ws_stream = tokio_tungstenite::accept_hdr_async(stream, callback)
         .await
         .expect("Error during WebSocket handshake");
+    // Retrieve the appName and clear the thread-local storage
+    let app_name = APP_NAME.with(|cell| cell.borrow_mut().take())
+        .expect("appName not set in callback");
 
+    // Store the ws_stream in the global map
     let (mut write, mut read) = ws_stream.split();
+    APP_STREAMS.insert(app_name, Arc::new(Mutex::new(write)));
+
 
     // Forward outbound messages to the other machine
     println!("[handle_connection]:: before entering thread...");
     tokio::spawn(async move {
         eprintln!("[Thread] Forwarding outbound messages...");
+        // TODO: Queue now should be specific for appName
         while let Some(message) = outbound_queue.pop() {
             let msg = Message::Text(message.to_string());
             eprintln!("[Thread] Sending message: {}", msg);
-            if let Err(e) = write.send(msg).await {
-                eprintln!("Failed to send message: {}", e);
-                break;
-            }
+            // TODO:
+            // if let Some(write) = APP_STREAMS.get("my_app") {
+            //     println!("Found 'my_app': {:?}", write);
+            //     if let Err(e) = write.send(msg).await {
+            //         eprintln!("Failed to send message: {}", e);
+            //         break;
+            //     }
+            // }
+
+
         }
     });
 
+    // TODO: Read and put each msg into the queue of given app_name
     // Receive messages from the other machine and add to inbound queue
     while let Some(msg) = read.next().await {
         match msg {
@@ -74,5 +129,7 @@ async fn handle_connection(
             _ => {}
         }
     }
+    //TODO:
+    // APP_STREAMS.remove(&app_name);
     Ok(())
 }
