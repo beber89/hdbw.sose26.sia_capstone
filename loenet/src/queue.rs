@@ -1,11 +1,10 @@
 use crossbeam_queue::SegQueue;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
-use crate::message::Message;
 
 #[derive(Debug)]
 pub struct OutboundQueue {
-    queue: Arc<Mutex<SegQueue<Message>>>,
+    queue: Arc<Mutex<SegQueue<Value>>>,
 }
 
 impl OutboundQueue {
@@ -15,11 +14,11 @@ impl OutboundQueue {
         }
     }
 
-    pub fn push(&self, message: Message) {
+    pub fn push(&self, message: Value) {
         self.queue.lock().unwrap().push(message);
     }
 
-    pub fn pop(&self) -> Option<Message> {
+    pub fn pop(&self) -> Option<Value> {
         self.queue.lock().unwrap().pop()
     }
 }
