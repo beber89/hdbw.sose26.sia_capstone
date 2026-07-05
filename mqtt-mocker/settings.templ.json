@@ -1,11 +1,13 @@
 {
   "BROKER_URL": "${BROKER_URL}",
+  "AUTH_USERNAME": "${AUTH_USERNAME}",
+  "AUTH_PASSWORD": "${AUTH_PASSWORD}",
   "TOPICS": [
     {
       "TYPE": "list",
       "PREFIX": "place",
       "LIST": ["roof", "basement"],
-      "TIME_INTERVAL": 8,
+      "TIME_INTERVAL": 3,
       "DATA": [
         {
           "NAME": "temperature",

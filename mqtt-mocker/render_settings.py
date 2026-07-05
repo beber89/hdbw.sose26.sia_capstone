@@ -7,7 +7,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATE_PATH = BASE_DIR / "settings.templ.json"
 ENV_PATH = BASE_DIR / ".env"
-OUTPUT_PATH = BASE_DIR / "settings.json"
+OUTPUT_PATH = BASE_DIR / "config/settings.json"
 ENV_VAR_PATTERN = re.compile(r"\$\{([^}]+)\}")
 
 
